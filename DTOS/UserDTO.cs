@@ -1,5 +1,3 @@
-using ProductSubscription.Models;
-
 namespace ProductSubscription.DTOS
 {
     public record UserDTO

@@ -43,6 +43,12 @@ namespace ProductSubscription.Repositories
             await Task.CompletedTask;
         }
 
+        public async Task DeleteAllProductsFromUserAsync(Guid userId)
+        {
+            products.RemoveAll(product => product.CreatorUserId == userId);
+            await Task.CompletedTask;
+        }
+
         public async Task UpdateProductAsync(Product product)
         {
             var index = products.FindIndex(existingProduct => existingProduct.Id == product.Id);

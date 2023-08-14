@@ -23,27 +23,41 @@ namespace ProductSubscription.Repositories
             return await Task.FromResult(user);
         }
 
-        public async Task<IEnumerable<Guid>> GetAllSubscribedUsersAsync(Guid id)
+        public async Task<IEnumerable<User>> GetAllSubscribedUsersAsync(Guid id)
         {
-            List<Guid> subscribedUsers = new List<Guid>();
+            List<User> subscribedUsers = new List<User>();
 
-            var user = users.Where(user => user.Id == id).SingleOrDefault();
+            var user = await GetUserAsync(id);
             if (user is not null)
             {
-                subscribedUsers = user.ListSubscribedUsers;
+                foreach (Guid subscribedUserId in user.ListSubscribedUsers)
+                {
+                    var subscribedUser = await GetUserAsync(subscribedUserId);
+                    if (subscribedUser is not null)
+                    {
+                        subscribedUsers.Add(subscribedUser);
+                    }
+                }
             }
 
             return await Task.FromResult(subscribedUsers);
         }
 
-        public async Task<IEnumerable<Guid>> GetAllFollowersAsync(Guid id)
+        public async Task<IEnumerable<User>> GetAllFollowersAsync(Guid id)
         {
-            IEnumerable<Guid> followers = new List<Guid>();
+            List<User> followers = new List<User>();
 
-            var user = users.Where(user => user.Id == id).SingleOrDefault();
+            var user = await GetUserAsync(id);
             if (user is not null)
             {
-                followers = user.ListFollowers;
+                foreach (Guid followerId in user.ListFollowers)
+                {
+                    var followerUser = await GetUserAsync(followerId);
+                    if (followerUser is not null)
+                    {
+                        followers.Add(followerUser);
+                    }
+                }
             }
 
             return await Task.FromResult(followers);
@@ -63,13 +77,46 @@ namespace ProductSubscription.Repositories
             await Task.CompletedTask;
         }
 
-        public async Task SubscribeUser(Guid userId, Guid subscribedUserId)
+        public async Task SubscribeUserAsync(Guid userId, Guid subscribedUserId)
         {
             var subscribedUserIndex = users.FindIndex(existingUser => existingUser.Id == subscribedUserId);
             users[subscribedUserIndex].ListFollowers.Add(userId);
 
             var userIndex = users.FindIndex(existingUser => existingUser.Id == userId);
             users[userIndex].ListSubscribedUsers.Add(subscribedUserId);
+
+            await Task.CompletedTask;
+        }
+
+        public async Task UnsubscribeUserAsync(Guid userId, Guid subscribedUserId)
+        {
+            var subscribedUserIndex = users.FindIndex(existingUser => existingUser.Id == subscribedUserId);
+            users[subscribedUserIndex].ListFollowers = users[subscribedUserIndex].ListFollowers.Where(existingSubscribedUserId => userId != existingSubscribedUserId).ToList();
+
+            var userIndex = users.FindIndex(existingUser => existingUser.Id == userId);
+            users[userIndex].ListSubscribedUsers = users[userIndex].ListSubscribedUsers.Where(existingUserId => subscribedUserId != existingUserId).ToList();
+
+            await Task.CompletedTask;
+        }
+
+        public async Task UnsubscribeAllUsersAsync(Guid userId)
+        {
+            var userIndex = users.FindIndex(existingUser => existingUser.Id == userId);
+            foreach (var subscribedUserId in users[userIndex].ListSubscribedUsers)
+            {
+                await UnsubscribeUserAsync(userId, subscribedUserId);
+            }
+
+            await Task.CompletedTask;
+        }
+
+        public async Task RemoveFollowersAsync(Guid userId)
+        {
+            var userIndex = users.FindIndex(existingUser => existingUser.Id == userId);
+            foreach (var followerUserId in users[userIndex].ListFollowers)
+            {
+                await UnsubscribeUserAsync(followerUserId, userId);
+            }
 
             await Task.CompletedTask;
         }

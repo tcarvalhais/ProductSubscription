@@ -9,6 +9,7 @@ namespace ProductSubscription.Repositories
         Task<IEnumerable<Product>> GetAllProductsFromUserAsync(Guid userId);
         Task CreateProductAsync(Product product);
         Task DeleteProductAsync(Guid id);
+        Task DeleteAllProductsFromUserAsync(Guid userId);
         Task UpdateProductAsync(Product product);
     }
 }

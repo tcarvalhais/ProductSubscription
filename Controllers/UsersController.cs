@@ -10,18 +10,20 @@ namespace ProductSubscription.Controllers
     [Route("users")]
     public class UsersController : ControllerBase
     {
-        private readonly IUsersRepository repository;
+        private readonly IUsersRepository usersRepository;
+        private readonly IProductsRepository productsRepository;
 
-        public UsersController(IUsersRepository repository)
+        public UsersController(IUsersRepository usersRepository, IProductsRepository productsRepository)
         {
-            this.repository = repository;
+            this.usersRepository = usersRepository;
+            this.productsRepository = productsRepository;
         }
 
         // Get all users
         [HttpGet("getAllUsers")]
         public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
         {
-            var users = (await repository.GetAllUsersAsync()).Select(user => user.AsDTO());
+            var users = (await usersRepository.GetAllUsersAsync()).Select(user => user.AsDTO());
             return users;
         }
 
@@ -29,7 +31,7 @@ namespace ProductSubscription.Controllers
         [HttpGet("getUser/{userId}")]
         public async Task<ActionResult<UserDTO>> GetUserAsync(Guid userId)
         {
-            var user = await repository.GetUserAsync(userId);
+            var user = await usersRepository.GetUserAsync(userId);
             if (user is null)
             {
                 return NotFound();
@@ -40,17 +42,17 @@ namespace ProductSubscription.Controllers
 
         // Get all subscribed users from that user, given its id
         [HttpGet("getAllSubscribedUsers/{userId}")]
-        public async Task<IEnumerable<Guid>> GetAllSubscribedUsersAsync(Guid userId)
+        public async Task<IEnumerable<User>> GetAllSubscribedUsersAsync(Guid userId)
         {
-            var users = await repository.GetAllSubscribedUsersAsync(userId);
+            var users = await usersRepository.GetAllSubscribedUsersAsync(userId);
             return users;
         }
 
         // Get all subscribers from that user, given its id
         [HttpGet("getAllFollowers/{userId}")]
-        public async Task<IEnumerable<Guid>> GetAllFollowersAsync(Guid userId)
+        public async Task<IEnumerable<User>> GetAllFollowersAsync(Guid userId)
         {
-            var users = await repository.GetAllFollowersAsync(userId);
+            var users = await usersRepository.GetAllFollowersAsync(userId);
             return users;
         }
 
@@ -66,7 +68,7 @@ namespace ProductSubscription.Controllers
                 ListFollowers = new List<Guid>()
             };
 
-            await repository.CreateUserAsync(user);
+            await usersRepository.CreateUserAsync(user);
             return CreatedAtAction(nameof(GetUserAsync), new { id = user.Id }, user.AsDTO());
         }
 
@@ -74,13 +76,17 @@ namespace ProductSubscription.Controllers
         [HttpDelete("deleteUser/{userId}")]
         public async Task<ActionResult> DeleteUserAsync(Guid userId)
         {
-            var existingUser = await repository.GetUserAsync(userId);
+            var existingUser = await usersRepository.GetUserAsync(userId);
             if (existingUser is null)
             {
                 return NotFound();
             }
 
-            await repository.DeleteUserAsync(userId);
+            await usersRepository.UnsubscribeAllUsersAsync(userId);
+            await usersRepository.RemoveFollowersAsync(userId);
+            await productsRepository.DeleteAllProductsFromUserAsync(userId);
+            await usersRepository.DeleteUserAsync(userId);
+
             return NoContent();
         }
 
@@ -88,15 +94,31 @@ namespace ProductSubscription.Controllers
         [HttpPut("subscribeUser/{userId}/{subscribedUserId}")]
         public async Task<ActionResult> SubscribeUser(Guid userId, Guid subscribedUserId)
         {
-            var existingUser = await repository.GetUserAsync(userId);
-            var existingSubscribedUser = await repository.GetUserAsync(subscribedUserId);
+            var existingUser = await usersRepository.GetUserAsync(userId);
+            var existingSubscribedUser = await usersRepository.GetUserAsync(subscribedUserId);
 
             if (existingUser is null || existingSubscribedUser is null)
             {
                 return NotFound();
             }
 
-            await repository.SubscribeUser(userId, subscribedUserId);
+            await usersRepository.SubscribeUserAsync(userId, subscribedUserId);
+            return NoContent();
+        }
+
+        // Subscribe to an user
+        [HttpPut("unsubscribeUser/{userId}/{subscribedUserId}")]
+        public async Task<ActionResult> UnsubscribeUser(Guid userId, Guid subscribedUserId)
+        {
+            var existingUser = await usersRepository.GetUserAsync(userId);
+            var existingSubscribedUser = await usersRepository.GetUserAsync(subscribedUserId);
+
+            if (existingUser is null || existingSubscribedUser is null)
+            {
+                return NotFound();
+            }
+
+            await usersRepository.UnsubscribeUserAsync(userId, subscribedUserId);
             return NoContent();
         }
     }

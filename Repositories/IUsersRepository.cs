@@ -6,10 +6,13 @@ namespace ProductSubscription.Repositories
     {
         Task<User> GetUserAsync(Guid id);
         Task<IEnumerable<User>> GetAllUsersAsync();
-        Task<IEnumerable<Guid>> GetAllSubscribedUsersAsync(Guid userId);
-        Task<IEnumerable<Guid>> GetAllFollowersAsync(Guid userId);
+        Task<IEnumerable<User>> GetAllSubscribedUsersAsync(Guid userId);
+        Task<IEnumerable<User>> GetAllFollowersAsync(Guid userId);
         Task CreateUserAsync(User user);
         Task DeleteUserAsync(Guid id);
-        Task SubscribeUser(Guid userId, Guid subscribedUserId);
+        Task SubscribeUserAsync(Guid userId, Guid subscribedUserId);
+        Task UnsubscribeUserAsync(Guid userId, Guid subscribedUserId);
+        Task UnsubscribeAllUsersAsync(Guid userId);
+        Task RemoveFollowersAsync(Guid userId);
     }
 }

@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using ProductSubscription.DTOS;
 using ProductSubscription.Models;
@@ -60,25 +59,18 @@ namespace ProductSubscription.Controllers
         [HttpGet("getAllProductsFromSubscribedUsers/{userId}")]
         public async Task<IEnumerable<ProductDTO>> GetAllProductsFromSubscribedUsersAsync(Guid userId)
         {
-            ConcurrentBag<ProductDTO> products = new ConcurrentBag<ProductDTO>();
+            IEnumerable<ProductDTO> products = new List<ProductDTO>();
 
             var user = await usersRepository.GetUserAsync(userId);
             if (user is not null)
             {
-                List<Guid> subscribedUsers = (await usersRepository.GetAllSubscribedUsersAsync(userId)).ToList();
-                /*foreach (var subscribedUserId in subscribedUsers)
+                List<User> subscribedUsers = (await usersRepository.GetAllSubscribedUsersAsync(userId)).ToList();
+                foreach (var subscribedUser in subscribedUsers)
                 {
-                    var listProducts = await productsRepository.GetAllProductsFromUserAsync(subscribedUserId);
+                    var listProducts = await productsRepository.GetAllProductsFromUserAsync(subscribedUser.Id);
                     var productsFromUser = listProducts.Select(product => product.AsDTO());
-                    products.Concat(productsFromUser);
-                }*/
-
-                Parallel.ForEach(subscribedUsers, async subscribedUserId =>
-                {
-                    var listProducts = await productsRepository.GetAllProductsFromUserAsync(subscribedUserId);
-                    var productsFromUser = listProducts.Select(product => product.AsDTO());
-                    products.Concat(productsFromUser);
-                });
+                    products = products.Concat(productsFromUser);
+                }
             }
 
             return products;

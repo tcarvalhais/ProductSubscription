@@ -22,21 +22,21 @@ namespace ProductSubscription.Controllers
         [HttpGet("getAllProducts")]
         public async Task<IEnumerable<ProductDTO>> GetAllProductsAsync()
         {
-            var products = (await productsRepository.GetAllProductsAsync()).Select(product => product.AsDTO());
+            var products = await productsRepository.GetAllProductsAsync();
             return products;
         }
 
         // Get product by id
         [HttpGet("getProductById/{productId}")]
-        public async Task<ActionResult<ProductDTO>> GetProductAsync(Guid id)
+        public async Task<ActionResult<ProductDTO>> GetProductAsync(Guid productId)
         {
-            var product = await productsRepository.GetProductAsync(id);
+            var product = await productsRepository.GetProductAsync(productId);
             if (product is null)
             {
                 return NotFound();
             }
 
-            return product.AsDTO();
+            return product;
         }
 
         // Get all products from a user
@@ -48,8 +48,7 @@ namespace ProductSubscription.Controllers
             var user = await usersRepository.GetUserAsync(userId);
             if (user is not null)
             {
-                var listProducts = await productsRepository.GetAllProductsFromUserAsync(userId);
-                products = listProducts.Select(product => product.AsDTO());
+                products = await productsRepository.GetAllProductsFromUserAsync(userId);
             }
 
             return products;
@@ -68,8 +67,7 @@ namespace ProductSubscription.Controllers
                 foreach (var subscribedUser in subscribedUsers)
                 {
                     var listProducts = await productsRepository.GetAllProductsFromUserAsync(subscribedUser.Id);
-                    var productsFromUser = listProducts.Select(product => product.AsDTO());
-                    products = products.Concat(productsFromUser);
+                    products = products.Concat(listProducts);
                 }
             }
 
@@ -86,16 +84,8 @@ namespace ProductSubscription.Controllers
                 return NotFound();
             }
 
-            Product product = new()
-            {
-                Id = Guid.NewGuid(),
-                Name = productDTO.Name,
-                CreatorUserId = productDTO.CreatorUserId,
-                Price = productDTO.Price
-            };
-
-            await productsRepository.CreateProductAsync(product);
-            return CreatedAtAction(nameof(GetProductAsync), new { id = product.Id }, product.AsDTO());
+            var product = await productsRepository.CreateProductAsync(productDTO);
+            return CreatedAtAction(nameof(GetProductAsync), new { productId = product.Id }, product.AsDTO());
         }
 
         // Delete a product
@@ -122,12 +112,7 @@ namespace ProductSubscription.Controllers
                 return NotFound();
             }
 
-            Product updatedProduct = existingProduct with
-            {
-                Price = productDTO.Price
-            };
-
-            await productsRepository.UpdateProductAsync(updatedProduct);
+            await productsRepository.UpdateProductAsync(productId, productDTO);
             return NoContent();
         }
     }

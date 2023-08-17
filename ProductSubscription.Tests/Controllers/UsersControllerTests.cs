@@ -35,6 +35,50 @@ public class UsersControllerTests
     }
 
     [Fact]
+    public async void UsersController_GetAllSubscribedUsersAsync_ReturnSuccess()
+    {
+        // Arrange
+        var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+
+        var subscribedUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        var subscribedTestUser = new User { Id = subscribedUserId, Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+
+        var listSubscribedUsers = new List<User> { subscribedTestUser };
+        A.CallTo(() => usersRepository.GetAllSubscribedUsersAsync(userId)).Returns(listSubscribedUsers);
+
+        // Act
+        var controller = new UsersController(usersRepository, productsRepository);
+        var result = await controller.GetAllSubscribedUsersAsync(userId);
+
+        // Assert
+        var users = Assert.IsAssignableFrom<IEnumerable<User>>(result);
+        Assert.Equal(listSubscribedUsers.Count, users.Count());
+    }
+
+    [Fact]
+    public async void UsersController_GetAllFollowersAsync_ReturnSuccess()
+    {
+        // Arrange
+        var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+
+        var followerUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        var followerTestUser = new User { Id = followerUserId, Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+
+        var listFollowers = new List<User> { followerTestUser };
+        A.CallTo(() => usersRepository.GetAllFollowersAsync(userId)).Returns(listFollowers);
+
+        // Act
+        var controller = new UsersController(usersRepository, productsRepository);
+        var result = await controller.GetAllFollowersAsync(userId);
+
+        // Assert
+        var users = Assert.IsAssignableFrom<IEnumerable<User>>(result);
+        Assert.Equal(listFollowers.Count, users.Count());
+    }
+
+    [Fact]
     public async Task UsersController_GetUserAsync_UserExists()
     {
         // Arrange
@@ -124,5 +168,89 @@ public class UsersControllerTests
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.Equal("User not found", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task UsersController_SubscribeUser_UserSubscribedWithSuccess()
+    {
+        // Arrange
+        var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns(testUser);
+        A.CallTo(() => usersRepository.GetAllSubscribedUsersAsync(userId)).Returns(new List<User>());
+
+        var subscribedUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        var subscribedTestUser = new User { Id = subscribedUserId, Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(subscribedUserId)).Returns(subscribedTestUser);
+
+        // Act
+        var controller = new UsersController(usersRepository, productsRepository);
+        var result = await controller.SubscribeUser(userId, subscribedUserId);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task UsersController_SubscribeUser_UserNotFound()
+    {
+        // Arrange
+        var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
+        A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns((User)null);
+
+        var subscribedUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        var subscribedTestUser = new User { Id = subscribedUserId, Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(subscribedUserId)).Returns(subscribedTestUser);
+
+        // Act
+        var controller = new UsersController(usersRepository, productsRepository);
+        var result = await controller.SubscribeUser(userId, subscribedUserId);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("User not found", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task UsersController_SubscribeUser_SubscribedUserNotFound()
+    {
+        // Arrange
+        var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns(testUser);
+        A.CallTo(() => usersRepository.GetAllSubscribedUsersAsync(userId)).Returns(new List<User>());
+
+        var subscribedUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        A.CallTo(() => usersRepository.GetUserAsync(subscribedUserId)).Returns((User)null);
+
+        // Act
+        var controller = new UsersController(usersRepository, productsRepository);
+        var result = await controller.SubscribeUser(userId, subscribedUserId);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("User not found", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task UsersController_SubscribeUser_UserAlreadySubscribed()
+    {
+        // Arrange
+        var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns(testUser);
+
+        var subscribedUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        var subscribedTestUser = new User { Id = subscribedUserId, Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(subscribedUserId)).Returns(subscribedTestUser);
+        A.CallTo(() => usersRepository.GetAllSubscribedUsersAsync(userId)).Returns(new List<User>() { subscribedTestUser });
+
+        // Act
+        var controller = new UsersController(usersRepository, productsRepository);
+        var result = await controller.SubscribeUser(userId, subscribedUserId);
+
+        // Assert
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+        Assert.Equal("User already subscribed", conflictResult.Value);
     }
 }

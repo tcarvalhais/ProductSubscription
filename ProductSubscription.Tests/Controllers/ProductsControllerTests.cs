@@ -64,7 +64,58 @@ public class ProductsControllerTests
 
         // Assert
         var resultProduct = Assert.IsAssignableFrom<ActionResult<ProductDTO>>(result);
-        Assert.IsType<NotFoundResult>(resultProduct.Result);
+        Assert.IsType<NotFoundObjectResult>(resultProduct.Result);
+    }
+
+    [Fact]
+    public async Task ProductsController_GetAllProductsFromUserAsync_ReturnSuccess()
+    {
+        // Arrange
+        var userId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        var testUser = new User { Id = userId, Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+
+        var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
+        var testProduct = new Product { Id = productId, Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
+        var listProducts = new List<Product>() { testProduct };
+
+        A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns(testUser);
+        A.CallTo(() => productsRepository.GetAllProductsFromUserAsync(userId)).Returns(listProducts);
+
+        // Act
+        var controller = new ProductsController(productsRepository, usersRepository);
+        var result = await controller.GetAllProductsFromUserAsync(userId);
+
+        // Assert
+        var productDTOs = Assert.IsAssignableFrom<IEnumerable<ProductDTO>>(result);
+        Assert.Equal(listProducts.Count, productDTOs.Count());
+    }
+
+    [Fact]
+    public async Task ProductsController_GetAllProductsFromSubscribedUsersAsync_ReturnSuccess()
+    {
+        // Arrange
+        var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+
+        var subscribedUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd");
+        var subscribedUser = new User { Id = subscribedUserId, Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        var listSubscribedUsers = new List<User>() { subscribedUser };
+
+        var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
+        var testProduct = new Product { Id = productId, Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
+        var listProducts = new List<Product>() { testProduct };
+
+        A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns(testUser);
+        A.CallTo(() => usersRepository.GetAllSubscribedUsersAsync(userId)).Returns(listSubscribedUsers);
+        A.CallTo(() => productsRepository.GetAllProductsFromUserAsync(subscribedUserId)).Returns(listProducts);
+
+        // Act
+        var controller = new ProductsController(productsRepository, usersRepository);
+        var result = await controller.GetAllProductsFromSubscribedUsersAsync(userId);
+
+        // Assert
+        var productDTOs = Assert.IsAssignableFrom<IEnumerable<ProductDTO>>(result);
+        Assert.Equal(listSubscribedUsers.Count * listProducts.Count, productDTOs.Count());
     }
 
     [Fact]
@@ -107,7 +158,7 @@ public class ProductsControllerTests
 
         // Assert
         Assert.IsType<ActionResult<ProductDTO>>(result);
-        Assert.IsType<NotFoundResult>(result.Result);
+        Assert.IsType<NotFoundObjectResult>(result.Result);
         A.CallTo(() => productsRepository.CreateProductAsync(A<Product>.Ignored)).MustNotHaveHappened();
     }
 
@@ -141,7 +192,7 @@ public class ProductsControllerTests
         var result = await controller.DeleteProductAsync(productId);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 
     [Fact]
@@ -186,7 +237,7 @@ public class ProductsControllerTests
             Price = productDTO.Price
         };
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
         A.CallTo(() => productsRepository.UpdateProductAsync(updatedProduct)).MustNotHaveHappened();
     }
 }

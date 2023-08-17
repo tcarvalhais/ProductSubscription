@@ -1,4 +1,3 @@
-using ProductSubscription.DTOS;
 using ProductSubscription.Models;
 
 namespace ProductSubscription.Repositories
@@ -13,35 +12,27 @@ namespace ProductSubscription.Repositories
             new Product { Id = new Guid("9e8d187f-72cd-4347-b2ba-65dad3daf224"), Name = "PH Lamps", CreatorUserId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f"), Price = 525.55 }
         };
 
-        public async Task<IEnumerable<ProductDTO>> GetAllProductsAsync()
+        public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
-            return await Task.FromResult(products.Select(product => product.AsDTO()));
+            return await Task.FromResult(products);
         }
 
-        public async Task<ProductDTO> GetProductAsync(Guid id)
+        public async Task<Product> GetProductAsync(Guid id)
         {
             var product = products.Where(product => product.Id == id).SingleOrDefault();
-            return await Task.FromResult(product?.AsDTO());
+            return await Task.FromResult(product);
         }
 
-        public async Task<IEnumerable<ProductDTO>> GetAllProductsFromUserAsync(Guid userId)
+        public async Task<IEnumerable<Product>> GetAllProductsFromUserAsync(Guid userId)
         {
-            var listProducts = products.Where(product => product.CreatorUserId == userId).Select(product => product.AsDTO());
+            var listProducts = products.Where(product => product.CreatorUserId == userId);
             return await Task.FromResult(listProducts);
         }
 
-        public async Task<Product> CreateProductAsync(CreateProductDTO productDTO)
+        public async Task CreateProductAsync(Product product)
         {
-            Product product = new()
-            {
-                Id = Guid.NewGuid(),
-                Name = productDTO.Name,
-                CreatorUserId = productDTO.CreatorUserId,
-                Price = productDTO.Price
-            };
-
             products.Add(product);
-            return await Task.FromResult(product);
+            await Task.CompletedTask;
         }
 
         public async Task DeleteProductAsync(Guid id)
@@ -58,15 +49,11 @@ namespace ProductSubscription.Repositories
             await Task.CompletedTask;
         }
 
-        public async Task UpdateProductAsync(Guid productId, UpdateProductDTO productDTO)
+        public async Task UpdateProductAsync(Product product)
         {
-            var index = products.FindIndex(existingProduct => existingProduct.Id == productId);
-            Product updatedProduct = products[index] with
-            {
-                Price = productDTO.Price
-            };
+            var index = products.FindIndex(existingProduct => existingProduct.Id == product.Id);
+            products[index] = product;
 
-            products[index] = updatedProduct;
             await Task.CompletedTask;
         }
     }

@@ -1,16 +1,15 @@
-using ProductSubscription.DTOS;
 using ProductSubscription.Models;
 
 namespace ProductSubscription.Repositories
 {
     public interface IProductsRepository
     {
-        Task<ProductDTO> GetProductAsync(Guid id);
-        Task<IEnumerable<ProductDTO>> GetAllProductsAsync();
-        Task<IEnumerable<ProductDTO>> GetAllProductsFromUserAsync(Guid userId);
-        Task<Product> CreateProductAsync(CreateProductDTO productDTO);
+        Task<Product> GetProductAsync(Guid id);
+        Task<IEnumerable<Product>> GetAllProductsAsync();
+        Task<IEnumerable<Product>> GetAllProductsFromUserAsync(Guid userId);
+        Task CreateProductAsync(Product product);
         Task DeleteProductAsync(Guid id);
         Task DeleteAllProductsFromUserAsync(Guid userId);
-        Task UpdateProductAsync(Guid productId, UpdateProductDTO productDTO);
+        Task UpdateProductAsync(Product product);
     }
 }

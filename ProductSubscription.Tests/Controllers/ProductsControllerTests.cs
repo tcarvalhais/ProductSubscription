@@ -23,7 +23,7 @@ public class ProductsControllerTests
     {
         // Arrange
         var testProduct = new Product { Id = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204"), Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
-        A.CallTo(() => productsRepository.GetAllProductsAsync()).Returns(new List<ProductDTO> { testProduct.AsDTO() });
+        A.CallTo(() => productsRepository.GetAllProductsAsync()).Returns(new List<Product> { testProduct });
 
         // Act
         var controller = new ProductsController(productsRepository, usersRepository);
@@ -40,7 +40,7 @@ public class ProductsControllerTests
         // Arrange
         var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
         var testProduct = new Product { Id = productId, Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
-        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns(testProduct.AsDTO());
+        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns(testProduct);
 
         // Act
         var controller = new ProductsController(productsRepository, usersRepository);
@@ -56,7 +56,7 @@ public class ProductsControllerTests
     {
         // Arrange
         var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
-        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns((ProductDTO)null);
+        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns((Product)null);
 
         // Act
         var controller = new ProductsController(productsRepository, usersRepository);
@@ -73,7 +73,7 @@ public class ProductsControllerTests
         // Arrange
         var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
         var testProduct = new Product { Id = productId, Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
-        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns(testProduct.AsDTO());
+        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns(testProduct);
 
         // Act
         var controller = new ProductsController(productsRepository, usersRepository);
@@ -90,7 +90,7 @@ public class ProductsControllerTests
         // Arrange
         var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
         var testProduct = new Product { Id = productId, Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
-        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns((ProductDTO)null);
+        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns((Product)null);
 
         // Act
         var controller = new ProductsController(productsRepository, usersRepository);
@@ -106,7 +106,7 @@ public class ProductsControllerTests
         // Arrange
         var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
         var testProduct = new Product { Id = productId, Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
-        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns(testProduct.AsDTO());
+        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns(testProduct);
 
         // Act
         var productDTO = new UpdateProductDTO { Price = 10 };
@@ -114,7 +114,12 @@ public class ProductsControllerTests
         var result = await controller.UpdateProductAsync(productId, productDTO);
 
         // Assert
-        A.CallTo(() => productsRepository.UpdateProductAsync(productId, productDTO)).MustHaveHappenedOnceExactly();
+        Product updatedProduct = testProduct with
+        {
+            Price = productDTO.Price
+        };
+
+        A.CallTo(() => productsRepository.UpdateProductAsync(updatedProduct)).MustHaveHappenedOnceExactly();
         Assert.IsType<NoContentResult>(result);
     }
 
@@ -124,7 +129,7 @@ public class ProductsControllerTests
         // Arrange
         var productId = new Guid("e3dd1eb9-e7f8-4e08-9505-39397b470204");
         var testProduct = new Product { Id = productId, Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
-        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns((ProductDTO)null);
+        A.CallTo(() => productsRepository.GetProductAsync(productId)).Returns((Product)null);
 
         // Act
         var productDTO = new UpdateProductDTO { Price = 10 };
@@ -132,7 +137,12 @@ public class ProductsControllerTests
         var result = await controller.UpdateProductAsync(productId, productDTO);
 
         // Assert
+        Product updatedProduct = testProduct with
+        {
+            Price = productDTO.Price
+        };
+
         Assert.IsType<NotFoundResult>(result);
-        A.CallTo(() => productsRepository.UpdateProductAsync(productId, productDTO)).MustNotHaveHappened();
+        A.CallTo(() => productsRepository.UpdateProductAsync(updatedProduct)).MustNotHaveHappened();
     }
 }

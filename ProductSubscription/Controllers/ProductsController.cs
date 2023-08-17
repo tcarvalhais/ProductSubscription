@@ -33,7 +33,7 @@ namespace ProductSubscription.Controllers
             var product = await productsRepository.GetProductAsync(id);
             if (product is null)
             {
-                return NotFound();
+                return NotFound("Product not found");
             }
 
             return product.AsDTO();
@@ -83,7 +83,7 @@ namespace ProductSubscription.Controllers
             var user = await usersRepository.GetUserAsync(productDTO.CreatorUserId);
             if (user is null)
             {
-                return NotFound();
+                return NotFound("User not found");
             }
 
             Product product = new()
@@ -105,7 +105,7 @@ namespace ProductSubscription.Controllers
             var existingProduct = await productsRepository.GetProductAsync(productId);
             if (existingProduct is null)
             {
-                return NotFound();
+                return NotFound("Product not found");
             }
 
             await productsRepository.DeleteProductAsync(productId);
@@ -119,7 +119,7 @@ namespace ProductSubscription.Controllers
             var existingProduct = await productsRepository.GetProductAsync(productId);
             if (existingProduct is null)
             {
-                return NotFound();
+                return NotFound("Product not found");
             }
 
             Product updatedProduct = existingProduct with

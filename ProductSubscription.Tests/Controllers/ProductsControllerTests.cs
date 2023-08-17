@@ -68,6 +68,50 @@ public class ProductsControllerTests
     }
 
     [Fact]
+    public async Task ProductsController_CreateProductAsync_UserExists()
+    {
+        // Arrange
+        var testProductDTO = new CreateProductDTO { Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
+        var testUser = new User { Id = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(testProductDTO.CreatorUserId)).Returns(testUser);
+
+        // Act
+        var controller = new ProductsController(productsRepository, usersRepository);
+        var result = await controller.CreateProductAsync(testProductDTO);
+
+        // Assert
+        Assert.IsType<ActionResult<ProductDTO>>(result);
+        if (result.Result is CreatedAtActionResult createdAtAction)
+        {
+            Assert.IsType<ProductDTO>(createdAtAction.Value);
+        }
+        else
+        {
+            Assert.True(false, "Expected a CreatedAtActionResult.");
+        }
+
+        A.CallTo(() => productsRepository.CreateProductAsync(A<Product>.Ignored)).MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task ProductsController_CreateProductAsync_UserNotExist()
+    {
+        // Arrange
+        var testProductDTO = new CreateProductDTO { Name = "Royal Copenhagen Dinnerware", CreatorUserId = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Price = 674.99 };
+        var testUser = new User { Id = new Guid("e9b232ae-076a-48d5-b3e0-ecabbea5d8cd"), Name = "Margrethe Ingrid", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        A.CallTo(() => usersRepository.GetUserAsync(testProductDTO.CreatorUserId)).Returns((User)null);
+
+        // Act
+        var controller = new ProductsController(productsRepository, usersRepository);
+        var result = await controller.CreateProductAsync(testProductDTO);
+
+        // Assert
+        Assert.IsType<ActionResult<ProductDTO>>(result);
+        Assert.IsType<NotFoundResult>(result.Result);
+        A.CallTo(() => productsRepository.CreateProductAsync(A<Product>.Ignored)).MustNotHaveHappened();
+    }
+
+    [Fact]
     public async Task ProductsController_DeleteProductAsync_ExistingProduct()
     {
         // Arrange

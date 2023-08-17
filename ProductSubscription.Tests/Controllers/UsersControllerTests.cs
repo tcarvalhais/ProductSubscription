@@ -39,7 +39,7 @@ public class UsersControllerTests
     {
         // Arrange
         var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
-        var testUser = new User { Id = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f"), Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
         A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns(testUser);
 
         // Act
@@ -64,7 +64,32 @@ public class UsersControllerTests
 
         // Assert
         var resultUser = Assert.IsAssignableFrom<ActionResult<UserDTO>>(result);
-        Assert.IsType<NotFoundResult>(resultUser.Result);
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(resultUser.Result);
+        Assert.Equal("User not found", notFoundResult.Value);
+    }
+
+    [Fact]
+    public async Task UsersController_CreateUserAsync_UserCreated()
+    {
+        // Arrange
+        var testUserDTO = new CreateUserDTO { Name = "Margrethe Ingrid" };
+
+        // Act
+        var controller = new UsersController(usersRepository, productsRepository);
+        var result = await controller.CreateUserAsync(testUserDTO);
+
+        // Assert
+        A.CallTo(() => usersRepository.CreateUserAsync(A<User>.Ignored)).MustHaveHappenedOnceExactly();
+        Assert.IsType<CreatedAtActionResult>(result.Result);
+
+        if (result.Result is CreatedAtActionResult createdAtAction)
+        {
+            Assert.IsType<UserDTO>(createdAtAction.Value);
+        }
+        else
+        {
+            Assert.True(false, "Expected a CreatedAtActionResult.");
+        }
     }
 
     [Fact]
@@ -72,7 +97,7 @@ public class UsersControllerTests
     {
         // Arrange
         var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
-        var testUser = new User { Id = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f"), Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
         A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns(testUser);
 
         // Act
@@ -89,7 +114,7 @@ public class UsersControllerTests
     {
         // Arrange
         var userId = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f");
-        var testUser = new User { Id = new Guid("92a1cd49-87fc-4618-a084-022a9b65366f"), Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
+        var testUser = new User { Id = userId, Name = "Mette Frederiksen", ListSubscribedUsers = new List<Guid>(), ListFollowers = new List<Guid>() };
         A.CallTo(() => usersRepository.GetUserAsync(userId)).Returns((User)null);
 
         // Act
@@ -97,6 +122,7 @@ public class UsersControllerTests
         var result = await controller.DeleteUserAsync(userId);
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal("User not found", notFoundResult.Value);
     }
 }

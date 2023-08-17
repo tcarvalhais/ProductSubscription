@@ -6,6 +6,6 @@ namespace ProductSubscription.DTOS
 
         public required Guid CreatorUserId { get; init; }
 
-        public required float Price { get; set; }
+        public required double Price { get; set; }
     }
 }
